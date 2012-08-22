@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import socket
+import optparse
+import time
+
+def createParser():
+    parser = optparse.OptionParser()
+    parser.add_option('-p','--port',action='store',default=8888,dest='port',
+                       help='port number',type='int')
+    parser.add_option('-i','--interface',action='store',default="0.0.0.0",
+                      dest='ip',help='interface to bind')
+    parser.add_option('-d','--delay',action='store',default=0.2,type='float',
+                      dest='delay',help='delay between packets')
+    parser.add_option('-b','--bytes',action='store',default=34,type='int',
+                      dest='bytes',help='number of bytes sent at a time')
+    return parser
+
+def Main():
+    Parser = createParser()
+    results,args = Parser.parse_args()
+    File = args[0]
+    if not os.path.exists(args[0]):
+       print "File doesn't exist"
+       exit()
+    #CREATE SOCKET
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind((results.ip, results.port))
+    #Listen for client request
+    sock.listen(5)
+    #serve forever
+    while True:
+        connection,addr = sock.accept()
+        print 'Somebody at %s wants a file!' % (addr,)
+        InputFile = open(File)
+        while True:
+            content = InputFile.read(results.bytes)
+            if not content:
+               connection.close()
+               InputFile.close()
+               break
+            try:
+               Sock.sendall(content)
+            except socket.error:
+               connection.close()
+               InputFile.close()
+               break
+            time.sleep(results.delay)
+             
+if __name__ == '__main__':
+   if len(sys.argv) < 2:
+      print "usage:"
+      print "To run with default settings"
+      print "sync_server <file-path>"
+      print "for customised settings , please use sync_server --help"
+      exit()
+   Main() 
